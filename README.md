@@ -1,21 +1,72 @@
-# Skill-MAS
+# Skill-MAS: Evolving Meta-Agent Skills for Automatic Multi-Agent System Design
 
-Skill-MAS evolves a **single meta-agent skill file** (`SKILL.md`) that instructs an LLM to design and orchestrate a Multi-Agent System (MAS) in three stages: task decomposition, agent engineering, and workflow orchestration. The evolved skill is evaluated on multiple benchmarks; trajectories from each round drive contrastive reflection and skill rewriting.
 
-**Jump to what you need**
+<div align="center">
 
-1. **[Running Evolution](#1-running-evolution)** — multi-round skill optimization on benchmark validation sets  
-2. **[Direct Inference with Existing Skills](#2-direct-inference-with-existing-skills)** — single-question build + inference with `init_skill/` or `optimized_skill/` via `demo_inference.py`
+### One `SKILL.md` → Three-Stage MAS Build → Multi-Benchmark Evolution
+
+[![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github&logoColor=white)](https://github.com/linhh29/Skill_MAS)
+
+
+</div>
 
 ---
 
-## 🏗️ Architecture Overview
+## 🥳 News
 
-```
+- **[2026-06-03]** We release the code for Skill-MAS.
+
+
+---
+
+## Table of Contents
+
+- [1. Overview](#1-overview)
+- [2. Setup](#2-setup)
+- [3. Demo Inference (Custom Question)](#3-demo-inference-custom-question)
+- [4. Running Evolution](#4-running-evolution)
+- [5. Evaluating a Fixed Skill](#5-evaluating-a-fixed-skill)
+- [6. Tips](#6-tips)
+
+---
+
+## 1. Overview
+
+<p align="center">
+  <img src="assert/background.png" width="1200">
+</p>
+
+Skill-MAS evolves a **single meta-agent skill file** (`SKILL.md`) that instructs an LLM to design and orchestrate a Multi-Agent System (MAS) in three stages:
+
+| Stage | Name | Output |
+|-------|------|--------|
+| **1** | Task Decomposition | Sub-task graph & constraints |
+| **2** | Agent Engineering | Sub-agent roles, tools, prompts |
+| **3** | Workflow Orchestration | Executable MAS Python code |
+
+Trajectories from each evolution round drive **contrastive reflection** and **skill rewriting**; the best skill snapshot is selected across rounds.
+
+<p align="center">
+  <img src="assert/Method.png" width="1200">
+</p>
+
+**Two ways to use this repo**
+
+| Path | When to use |
+|------|-------------|
+| 🚀 **[Demo Inference](#3-demo-inference-custom-question)** | One question + existing skill → build & run MAS immediately |
+| 🔄 **[Evolution](#4-running-evolution)** | Multi-round skill optimization on benchmark validation sets |
+
+---
+
+### Repository Layout
+
+```text
 Skill_MAS/
+├── assert/               # README figures (background.png, Method.png)
 ├── core/                 # CLI entry, evolution pipeline, resume, task selection
 ├── evolution/            # Rollout, contrastive reflection, skill optimizer, bench adapters
-├── skill_mas/            # 3-stage MAS builder, async LLM client, model_config.json(.example)
+├── skill_mas/            # 3-stage MAS builder, async LLM client, model_config.json
 ├── template/             # Generated MAS code templates and SubAgent runtime
 ├── utils/                # Paths, cost tracking, logging, redaction
 ├── init_skill/           # Initial (pre-evolution) SKILL.md
@@ -25,27 +76,21 @@ Skill_MAS/
 │   ├── deep_research_bench/
 │   ├── hlemath/
 │   └── BrowseComp-Plus/
-├── run_*.sh              # Evolution wrappers (run from arxiv_code/ parent)
+├── run_*.sh              # Evolution wrappers (run from parent of Skill_MAS/)
 ├── demo_inference.py     # Single-question build + inference demo
 ├── demo_inference.sh     # Shell wrapper for demo_inference.py
 └── results/              # Generated at runtime (not shipped)
 ```
 
-### How a round works
+### How an evolution round works
 
-Each evolution **round** goes through this loop:
+1. **Multi-trajectory rollout** (`evolution/rollout_multi.py`) — run `k` trajectories per validation task; the agent reads the current round's `SKILL.md`, generates MAS code via three build stages (`skill_mas/build.py`), executes it, and records scores plus phase-level traces.
 
-1. **Multi-trajectory rollout** (`evolution/rollout_multi.py`)  
-   We run `k` trajectories per validation task. The agent reads the current round's `SKILL.md`, generates MAS code via three build stages (`skill_mas/build.py`), executes it, and records scores plus phase-level traces.
+2. **Contrastive reflection** (`evolution/contrastive_reflect.py`) — compare high- vs low-scoring trajectories and synthesize structured improvement signals.
 
-2. **Contrastive reflection** (`evolution/contrastive_reflect.py`)  
-   We compare high- vs low-scoring trajectories and synthesize structured improvement signals.
+3. **Skill bank optimization** (`evolution/bank_optimizer.py`) — an optimizer LLM rewrites the single `SKILL.md` using reflection reports and round statistics.
 
-3. **Skill bank optimization** (`evolution/bank_optimizer.py`)  
-   An optimizer LLM rewrites the single `SKILL.md` using reflection reports and round statistics.
-
-4. **Round selection** (`evolution/assemble_select.py`)  
-   We track per-round scores; after all rounds, the best skill snapshot is selected.
+4. **Round selection** (`evolution/assemble_select.py`) — track per-round scores; after all rounds, select the best skill snapshot.
 
 ### Benchmark backends
 
@@ -58,9 +103,7 @@ Each evolution **round** goes through this loop:
 
 ### Where results land
 
-Results are written under:
-
-```
+```text
 Skill_MAS/results/{backend}_{model_tag}/
 ├── artifacts/
 │   ├── skills/{bench_id}/{run_id}/round_XX/SKILL.md   # skill snapshots per round
@@ -68,30 +111,125 @@ Skill_MAS/results/{backend}_{model_tag}/
 └── log/{bench_id}/{run_id}/round_XX/                  # traces, exports
 ```
 
+Each round also saves:
+
+```text
+round_r/
+  ├── trajectories/     # per-task, per-trajectory records
+  ├── aspects/          # phase-level snapshots
+  └── contrastive/      # reflection reports
+
+skills/.../round_r/
+  ├── SKILL.md          # skill used in this round (rewritten after r-1)
+  ├── bank_meta.json    # optimization history
+  └── knee_images/      # task-priority elbow plots
+```
+
 ---
 
-## ⚙️ Prerequisites
+## 2. Setup
 
-Before you run anything, make sure you've got these set up:
+### Repository layout
 
-1. **Repository layout** — Check out this repo so that `Skill_MAS/` lives under a parent directory (e.g. `arxiv_code/`). All benchmarks are vendored under `Skill_MAS/dataset/`; you do **not** need sibling copies of `vitabench_single/`, `hlemath/`, etc.
+Check out this repo so that `Skill_MAS/` lives under a **parent directory** (e.g. `demo/` or `arxiv_code/`). All benchmarks are vendored under `Skill_MAS/dataset/`; you do **not** need sibling copies of `vitabench_single/`, `hlemath/`, etc.
 
-2. **Python environment** — Install dependencies for Skill-MAS and the benchmark you use (see `dataset/vitabench/requirements.txt` and each benchmark's README).
+### Python environment
 
+Install dependencies for Skill-MAS and the benchmark you use (see `dataset/vitabench/requirements.txt` and each benchmark's README).
 
+```bash
+conda create -n skill_mas python=3.11 -y
+conda activate skill_mas
+pip install openai pydantic loguru  # plus benchmark-specific deps
+```
 
-4. **PYTHONPATH** — Run commands from the **parent of `Skill_MAS/`** (e.g. `arxiv_code/`) so `import Skill_MAS` and `import vita` resolve correctly. The shell scripts set this automatically.
+### Model & API configuration
+
+Edit `skill_mas/model_config.json` — model ids, pricing, `base_url`, and `${OPENAI_API_KEY}` placeholders. Shell scripts resolve credentials via environment variables:
+
 
 ---
 
-## 🔄 1. Running Evolution
+## 3. Demo Inference (Custom Question)
+
+Use this when you want to try Skill-MAS on **your own task** without running multi-round evolution.
+
+We ship ready-to-use skill files — no evolution required:
+
+| Path | Role |
+|------|------|
+| `init_skill/SKILL.md` | Initial meta-agent skill (pre-evolution baseline) |
+| `optimized_skill/vitabench.md` | Evolved skill for VitaBench |
+| `optimized_skill/drb.md` | Evolved skill for Deep Research Bench |
+| `optimized_skill/hlemath.md` | Evolved skill for HLEMath |
+| `optimized_skill/bcp.md` | Evolved skill for BrowseComp-Plus |
+
+`demo_inference.py` loads any of these paths, runs the three-stage build, **prints Stage-3 MAS code**, executes the generated workflow, and prints the answer.
+
+Supported standalone datasets in the demo: **hlemath**, **drb**, **bcp**. VitaBench needs the full simulator (`run_vita.sh` or `dataset/vitabench/run_skill_mas.sh`).
+
+### Option A — shell script (recommended)
+
+```bash
+cd /path/to/parent-of-Skill_MAS
+
+# Usage: bash Skill_MAS/demo_inference.sh <model_id> <skill_path> "<question>"
+
+bash Skill_MAS/demo_inference.sh qwen3.5-plus \
+  Skill_MAS/init_skill/SKILL.md \
+  "What is 17 + 28? Give the final answer in \\boxed{...} form."
+
+bash Skill_MAS/demo_inference.sh qwen3.5-plus \
+  Skill_MAS/optimized_skill/hlemath.md \
+  "Find the number of positive integers n such that n^2 + 3n + 2 is divisible by n + 1."
+```
+
+### Option B — Python directly
+
+```bash
+cd /path/to/parent-of-Skill_MAS
+export OPENAI_API_KEY="your-key"
+export PYTHONPATH="$(pwd):$(pwd)/Skill_MAS/dataset:$(pwd)/Skill_MAS/dataset/vitabench/src"
+
+python Skill_MAS/demo_inference.py \
+  --model qwen3.5-plus \
+  --skill Skill_MAS/optimized_skill/drb.md \
+  --question "Summarize recent progress in retrieval-augmented generation." \
+  --verbose
+
+python Skill_MAS/demo_inference.py \
+  --model qwen3.5-plus \
+  --skill Skill_MAS/init_skill/SKILL.md \
+  --question "Your task prompt here." \
+  --dataset hlemath \
+  --save-mas-code /tmp/demo_mas.py
+```
+
+### CLI flags
+
+| Flag | Description |
+|------|-------------|
+| `--skill` | Path to `SKILL.md` or `optimized_skill/*.md` (required) |
+| `--question` | Input task / question (required) |
+| `--model` | Agent model id from `model_config.json` (default: `qwen3.5-plus`) |
+| `--dataset` | `hlemath` \| `drb` \| `bcp` \| `vita`; auto-inferred from skill filename when omitted |
+| `--save-mas-code` | Optional path to save generated MAS Python code |
+| `--verbose` | Print parsed JSON from each build stage |
+
+BrowseComp-Plus skills (`bcp`) additionally accept `--bcp-index-path`, `--bcp-retrieval-topk`, `--bcp-doc-max-tokens`, and `--bcp-max-retrieval-rounds`. The BM25 index under `dataset/BrowseComp-Plus/scripts_build_index/indexes/bm25` must be available (see that benchmark's README).
+
+> For BrowseComp-Plus, refer to the official repo for data preprocessing. We do not ship a plain-text data file used in our paper, to reduce data contamination risk.
+
+---
+
+## 4. Running Evolution
 
 ### Quick start (shell scripts)
 
-Run from the directory **above** `Skill_MAS/` (e.g. `arxiv_code/`). Each `run_*.sh` takes two positional arguments: **agent model id** and **max concurrency**.
+Run from the directory **above** `Skill_MAS/`. Each `run_*.sh` takes two positional arguments: **agent model id** and **max concurrency**.
 
 ```bash
-cd /path/to/arxiv_code
+cd /path/to/parent-of-Skill_MAS
 
 # VitaBench (cross-domain: delivery, instore, ota)
 bash Skill_MAS/run_vita.sh <model_id> <max_concurrency>
@@ -115,12 +253,12 @@ Default evolution settings in the scripts:
 | `MAX_PROBLEMS` | `0` | Validation subset size (`0` = all tasks) |
 | `RUN_ID` | `exp1` | Logical run name under `results/` |
 
-Tweak the variables at the top of each script if you want to change rounds, task limits, evaluator/judge models, etc.
+Tweak the variables at the top of each script to change rounds, task limits, evaluator/judge models, etc.
 
 ### CLI (direct invocation)
 
 ```bash
-cd /path/to/arxiv_code
+cd /path/to/parent-of-Skill_MAS
 export OPENAI_API_KEY="your-key"
 export PYTHONPATH="$(pwd):$(pwd)/Skill_MAS/dataset:$(pwd)/Skill_MAS/dataset/vitabench/src"
 
@@ -141,43 +279,22 @@ python -m Skill_MAS evolve \
   --language chinese
 ```
 
-A couple of other subcommands I find handy:
-
-```bash
-# List validation task IDs for a backend
-python -m Skill_MAS list-val \
-  --bench-backend vitabench \
-  --jsonl Skill_MAS/dataset/vitabench/data/vita_validate.json
-
-# Seed round_00 only (copy init skill, no rollout)
-python -m Skill_MAS init-run --bench-backend vitabench --bench-id skill_mas_agent --run-id exp1
-```
 
 ### Resume and fresh runs
 
-- **Resume**: Re-run the same command with the same `--run-id`. The pipeline detects completed rounds via `summary_rXX.json` and picks up from the next round.
-- **Fresh run**: Add `--fresh` to allocate a new run directory (`exp1_2`, `exp1_3`, …) and restart from `round_00`.
+| Mode | How |
+|------|-----|
+| **Resume** | Re-run the same command with the same `--run-id`. Completed rounds are detected via `summary_rXX.json`. |
+| **Fresh run** | Add `--fresh` to allocate a new run directory (`exp1_2`, `exp1_3`, …) and restart from `round_00`. |
 
-### What gets saved each round
+---
 
-```
-round_r/
-  ├── trajectories/     # per-task, per-trajectory records
-  ├── aspects/          # phase-level snapshots
-  └── contrastive/      # reflection reports
+## 5. Evaluating a Fixed Skill
 
-skills/.../round_r/
-  ├── SKILL.md          # skill used in this round (rewritten after r-1)
-  ├── bank_meta.json    # optimization history
-  └── knee_images/      # task-priority elbow plots
-```
-
-### Evaluating a fixed skill (no evolution)
-
-If you just want to run a benchmark with an existing skill — no multi-round evolution — use the per-bench scripts under `dataset/`. The first argument is a path **relative to `Skill_MAS/`** pointing at the skill file (e.g. `init_skill/SKILL.md` or `optimized_skill/hlemath.md`).
+Run a benchmark with an existing skill — **no multi-round evolution**. The first argument is a path **relative to `Skill_MAS/`** (e.g. `init_skill/SKILL.md` or `optimized_skill/hlemath.md`).
 
 ```bash
-cd /path/to/arxiv_code
+cd /path/to/parent-of-Skill_MAS
 export OPENAI_API_KEY="your-key"
 
 bash Skill_MAS/dataset/hlemath/run_skill_mas.sh init_skill/SKILL.md <model_id> <max_concurrency>
@@ -188,73 +305,19 @@ bash Skill_MAS/dataset/vitabench/run_skill_mas.sh optimized_skill/vitabench.md <
 
 ---
 
-## 🚀 2. Direct Inference with Existing Skills
+## 6. Tips
 
-We ship two directories of ready-to-use skill files — you do **not** need to re-run evolution to try them on a single question:
+- Start with **`demo_inference.sh`** on one HLEMath question before launching a full evolution run — it is the fastest way to validate API config and skill quality.
+- Use **`--verbose`** in `demo_inference.py` to inspect Stage 1–2 JSON; Stage 3 MAS code is always printed before execution.
+- Begin with smaller `MAX_PROBLEMS`, fewer `ROUNDS`, or lower `K_TRAJ` in the shell scripts.
+- **`--fresh`** vs resume: same `--run-id` resumes; add `--fresh` when you want a clean experiment directory.
+- BrowseComp-Plus requires the BM25 index and official data pipeline — see `dataset/BrowseComp-Plus/README.md`.
+- Cached trajectories and skills live under `results/`; add that path to `.gitignore` if you fork the repo.
 
-| Path | Role |
-|------|------|
-| `init_skill/SKILL.md` | Initial meta-agent skill (pre-evolution baseline) |
-| `optimized_skill/vitabench.md` | Evolved skill for VitaBench |
-| `optimized_skill/drb.md` | Evolved skill for Deep Research Bench |
-| `optimized_skill/hlemath.md` | Evolved skill for HLEMath |
-| `optimized_skill/bcp.md` | Evolved skill for BrowseComp-Plus |
+---
 
-`demo_inference.py` loads any of these paths, runs the Skill-MAS three-stage build (decomposition → agent engineering → orchestration), executes the generated MAS, and prints the answer.
+<div align="center">
 
-Supported standalone datasets in the demo: **hlemath**, **drb**, **bcp**. VitaBench needs the full simulator (`run_vita.sh` or `dataset/vitabench/run_skill_mas.sh`).
+### 🌟 If you find Skill-MAS helpful, please consider giving us a star!
 
-### Shell wrapper
-
-From the parent of `Skill_MAS/` (after configuring `model_config.json` and `OPENAI_API_KEY`):
-
-```bash
-cd /path/to/arxiv_code
-
-# Usage: bash Skill_MAS/demo_inference.sh <model_id> <skill_path> "<question>"
-
-bash Skill_MAS/demo_inference.sh qwen3.5-plus \
-  Skill_MAS/init_skill/SKILL.md \
-  "What is 17 + 28? Give the final answer in \\boxed{...} form."
-
-bash Skill_MAS/demo_inference.sh qwen3.5-plus \
-  Skill_MAS/optimized_skill/hlemath.md \
-  "Find the number of positive integers n such that n^2 + 3n + 2 is divisible by n + 1."
-
-```
-
-### Python CLI
-
-```bash
-cd /path/to/arxiv_code
-export OPENAI_API_KEY="your-key"
-export PYTHONPATH="$(pwd):$(pwd)/Skill_MAS/dataset:$(pwd)/Skill_MAS/dataset/vitabench/src"
-
-python Skill_MAS/demo_inference.py \
-  --model qwen3.5-plus \
-  --skill Skill_MAS/optimized_skill/drb.md \
-  --question "Summarize recent progress in retrieval-augmented generation." \
-  --verbose
-
-python Skill_MAS/demo_inference.py \
-  --model qwen3.5-plus \
-  --skill Skill_MAS/init_skill/SKILL.md \
-  --question "Your task prompt here." \
-  --dataset hlemath \
-  --save-mas-code /tmp/demo_mas.py
-```
-
-### Arguments
-
-| Flag | Description |
-|------|-------------|
-| `--skill` | Path to `SKILL.md` or `optimized_skill/*.md` (required) |
-| `--question` | Input task / question (required) |
-| `--model` | Agent model id from `model_config.json` (default: `qwen3.5-plus`) |
-| `--dataset` | `hlemath` \| `drb` \| `bcp` \| `vita`; auto-inferred from skill filename when omitted |
-| `--save-mas-code` | Optional path to save generated MAS Python code |
-| `--verbose` | Print parsed JSON from each build stage |
-
-BrowseComp-Plus skills (`bcp`) additionally accept `--bcp-index-path`, `--bcp-retrieval-topk`, `--bcp-doc-max-tokens`, and `--bcp-max-retrieval-rounds` (defaults match `run_bcp.sh`). The BM25 index under `dataset/BrowseComp-Plus/scripts_build_index/indexes/bm25` must be available (see that benchmark's README for download steps).
-
-For BrowseComp-Plus, please refer to the official repo for the data preprocess. We don't provide a plain text data file used in our paper for preventing the data contamination.
+</div>
