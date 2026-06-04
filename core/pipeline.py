@@ -10,9 +10,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-_REPO = Path(__file__).resolve().parents[2]
-if str(_REPO / "vitabench_single" / "src") not in sys.path:
-    sys.path.insert(0, str(_REPO / "vitabench_single" / "src"))
+from Skill_MAS.utils.paths import ensure_sys_path
+
+ensure_sys_path(include_vita=True, include_dataset=True)
 
 from ..utils.config import resolve_init_skill_root
 from ..evolution.assemble_select import compute_round_score, finalize_best_round, update_round_scoreboard
@@ -271,7 +271,7 @@ def evolve(
     elif bb == "vitabench":
         task_ids = vitabench_validate_ids(resolved_vita_validate_file)
         if not task_ids:
-            raise RuntimeError("No task ids in vitabench_single/data/vita_validate.json")
+            raise RuntimeError("No task ids in dataset/vitabench/data/vita_validate.json")
     elif bb == "drb":
         task_ids = drb_validate_ids(resolved_drb_query_jsonl)
         if not task_ids:

@@ -6,11 +6,9 @@ import argparse
 import sys
 from pathlib import Path
 
-_REPO = Path(__file__).resolve().parents[2]
-if str(_REPO) not in sys.path:
-    sys.path.insert(0, str(_REPO))
-if str(_REPO / "vitabench_single" / "src") not in sys.path:
-    sys.path.insert(0, str(_REPO / "vitabench_single" / "src"))
+from Skill_MAS.utils.paths import ensure_sys_path
+
+ensure_sys_path(include_vita=True, include_dataset=True)
 
 from ..utils.config import (
     DEFAULT_AGENT_LLM,
@@ -96,7 +94,7 @@ def cmd_split_build(args: argparse.Namespace) -> None:
     del args
     print("split-build is deprecated.")
     print("Validation data is read directly from benchmark folders:")
-    print("- vitabench_single/data/vita_validate.json")
+    print("- Skill_MAS/dataset/vitabench/data/vita_validate.json")
     print("- deep_research_bench/data/drb_validate.jsonl")
     print("- hlemath/data/hlemath_validate.jsonl")
     print("- BrowseComp-Plus/data/browsecomp_plus_validate.jsonl")

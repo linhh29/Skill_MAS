@@ -1,7 +1,7 @@
 """Strip API keys and auth headers from structures persisted to logs / JSON exports.
 
 Kept in Skill_MAS for exports that read VitaBench JSON without importing ``vita``.
-Logic mirrors ``vitabench_single/src/vita/utils/secrets_redact.py``.
+Logic mirrors ``dataset/vitabench/src/vita/utils/secrets_redact.py``.
 """
 
 from __future__ import annotations

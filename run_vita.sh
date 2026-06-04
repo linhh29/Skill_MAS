@@ -13,7 +13,7 @@ BENCH_ID="skill_mas_agent"
 RUN_ID="exp1"
 DOMAIN="delivery,instore,ota"
 TASK_SET_NAME=""
-JSONL="${REPO_ROOT}/vitabench_single/data/vita_validate.json"
+JSONL="${REPO_ROOT}/Skill_MAS/dataset/vitabench/data/vita_validate.json"
 
 # ----------------------------
 # Evolution controls
@@ -42,9 +42,9 @@ read_model_param() {
 }
 
 cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/vitabench_single/src"
+export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/Skill_MAS/dataset/vitabench/src:${REPO_ROOT}/Skill_MAS/dataset"
 
-# Default during evolve: no Skill-MAS mirror under vitabench_single/results/.../skill_mas_process_traces/
+# Default during evolve: no Skill-MAS mirror under dataset/vitabench/results/.../skill_mas_process_traces/
 # (rollout_multi sets MASKILL_SKIP_VITABENCH_TRACE_EXPORT). To export there anyway: export MASKILL_SKIP_VITABENCH_TRACE_EXPORT=0
 
 # Print full traces in pipeline logs

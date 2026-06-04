@@ -1,0 +1,25 @@
+# LLM Model Registry (names only)
+#
+# Runtime transport + generation params + pricing are loaded by model name from:
+#   Skill_MAS/skill_mas/model_config.json
+# (see SKILL_MAS_ROOT / SKILL_MAS_MODEL_CONFIG)
+
+default: {}
+
+models:
+  - name: gpt-5.4-nano
+
+  - name: gpt-5.4-mini
+
+  - name: gemini-3.1-flash-lite-preview
+
+  - name: deepseek-v3.2
+
+  - name: deepseek-v4-flash
+
+  - name: qwen3-next-80b-a3b-instruct
+
+  - name: qwen3-max
+
+  - name: qwen3.5-plus
+

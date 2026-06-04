@@ -13,9 +13,11 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
-_SKILL_MAS_PKG_ROOT = Path(__file__).resolve().parents[1]
-if str(_SKILL_MAS_PKG_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SKILL_MAS_PKG_ROOT))
+_SKILL_MAS_PKG_ROOT = Path(__file__).resolve().parent.parent
+_PACKAGE_ROOT = _SKILL_MAS_PKG_ROOT.parent
+for _p in (_PACKAGE_ROOT, _SKILL_MAS_PKG_ROOT):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 from template.mas_code_template import prepend_fixed_imports, stage3_llm_reference_bundle
 
@@ -2008,9 +2010,10 @@ async def run_generated_workflow(
     Returns workflow state dict.
     """
     # Ensure generated code can import template modules regardless of launch path.
-    pkg_root = str(_SKILL_MAS_PKG_ROOT)
-    if pkg_root not in sys.path:
-        sys.path.insert(0, pkg_root)
+    for p in (_PACKAGE_ROOT, _SKILL_MAS_PKG_ROOT):
+        ps = str(p)
+        if ps not in sys.path:
+            sys.path.insert(0, ps)
 
 
     ns: dict[str, Any] = {}
@@ -2343,9 +2346,10 @@ async def run_mas_pipeline_with_retries(
 
 async def _main() -> None:
     # Default quick test: use the first HLEMath sample.
-    repo_root = _SKILL_MAS_PKG_ROOT.parent
-    hlemath_jsonl = repo_root / "hlemath" / "data" / "hlemath_test.jsonl"
-    init_skill = _SKILL_MAS_PKG_ROOT / "init_skill" / "SKILL.md"
+    from Skill_MAS.utils.paths import HLEMATH_ROOT, INIT_SKILL_DIR
+
+    hlemath_jsonl = HLEMATH_ROOT / "data" / "hlemath_test.jsonl"
+    init_skill = INIT_SKILL_DIR / "SKILL.md"
     model = "qwen3.5-plus"
 
     with hlemath_jsonl.open("r", encoding="utf-8") as f:

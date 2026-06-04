@@ -19,7 +19,7 @@ AGENT_LLM=$MODEL
 OPTIMIZER_LLM=$MODEL
 MAX_CONCURRENCY=$2
 
-JSONL="${REPO_ROOT}/hlemath/data/hlemath_validate.jsonl"
+JSONL="${REPO_ROOT}/Skill_MAS/dataset/hlemath/data/hlemath_validate.jsonl"
 MODEL_CONFIG="${REPO_ROOT}/Skill_MAS/skill_mas/model_config.json"
 
 read_model_param() {
@@ -29,7 +29,7 @@ read_model_param() {
 }
 
 cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/vitabench_single/src"
+export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/Skill_MAS/dataset:${REPO_ROOT}/Skill_MAS/dataset/vitabench/src"
 
 export MASKILL_PRINT_TRACES="0"
 export LOGURU_LEVEL="ERROR"

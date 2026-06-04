@@ -16,8 +16,9 @@ from typing import Any
 
 from ..utils.config import DEFAULT_LANGUAGE
 
-_REPO = Path(__file__).resolve().parents[2]
-_DATA_ROOT = _REPO / "Skill_MAS" / "data"
+from Skill_MAS.utils.paths import SKILL_MAS_ROOT
+
+_DATA_ROOT = SKILL_MAS_ROOT / "data"
 
 
 def split_root() -> Path:
@@ -60,10 +61,9 @@ def build_vita_split(
     force: bool = False,
 ) -> Path:
     """Shuffle all task ids; write ``*_validate.json`` and ``*_test.json``. Returns validate path."""
-    import sys
+    from Skill_MAS.utils.paths import ensure_sys_path
 
-    if str(_REPO / "vitabench_single" / "src") not in sys.path:
-        sys.path.insert(0, str(_REPO / "vitabench_single" / "src"))
+    ensure_sys_path(include_vita=True, include_dataset=True)
     from vita.run import load_tasks
 
     _DATA_ROOT.mkdir(parents=True, exist_ok=True)
@@ -189,7 +189,7 @@ def _hlemath_jsonl_line_count(jsonl_path: Path) -> int:
                 continue
             if first:
                 first = False
-                if raw.startswith("version ") and "git-lfs" in raw:
+                if raw.startswith("version https://git-lfs.github.com"):
                     raise RuntimeError(
                         f"{jsonl_path} is a Git LFS pointer. Run `git lfs pull` or use real JSONL."
                     )

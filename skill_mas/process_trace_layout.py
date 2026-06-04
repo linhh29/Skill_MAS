@@ -1,5 +1,5 @@
 """
-Disk layout for Skill-MAS process traces aligned with vitabench_single
+Disk layout for Skill-MAS process traces aligned with dataset/vitabench
 (``results/<model>/skill_mas_process_traces/<skill_suffix>/sample_logs/0000__<task_id>_t0/``).
 
 Per-sample MAS trajectory JSON files live under ``sample_trace_json/`` (parallel to ``sample_logs/``).
@@ -56,7 +56,7 @@ def skill_workspace_from_init_path(init_path: Path | str) -> Path:
 def skill_mas_trace_suffix_parts(workspace: Path | str) -> tuple[str, ...]:
     """
     Path segments under ``skill_mas_process_traces/``, matching
-    ``vitabench_single`` ``results_mirror.skill_mas_trace_suffix`` + multi-segment dirs.
+    ``dataset/vitabench`` ``results_mirror.skill_mas_trace_suffix`` + multi-segment dirs.
     """
     default = ("default",)
     path = str(Path(workspace).resolve())

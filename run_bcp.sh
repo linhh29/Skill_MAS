@@ -22,8 +22,8 @@ JUDGE_LLM="gemini-3.1-flash-lite-preview"
 JUDGE_TIMEOUT_S="1200"
 MAX_CONCURRENCY=$2
 
-JSONL="${REPO_ROOT}/BrowseComp-Plus/data/browsecomp_plus_validate.jsonl"
-INDEX_PATH="${REPO_ROOT}/BrowseComp-Plus/scripts_build_index/indexes/bm25"
+JSONL="${REPO_ROOT}/Skill_MAS/dataset/BrowseComp-Plus/data/browsecomp_plus_validate.jsonl"
+INDEX_PATH="${REPO_ROOT}/Skill_MAS/dataset/BrowseComp-Plus/scripts_build_index/indexes/bm25"
 RETRIEVAL_TOPK="5"
 DOC_MAX_TOKENS="512"
 MAX_RETRIEVAL_ROUNDS="10"
@@ -36,7 +36,7 @@ read_model_param() {
 }
 
 cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/vitabench_single/src"
+export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/Skill_MAS/dataset:${REPO_ROOT}/Skill_MAS/dataset/BrowseComp-Plus:${REPO_ROOT}/Skill_MAS/dataset/vitabench/src"
 
 export MASKILL_PRINT_TRACES="0"
 export OPENAI_API_KEY="$(read_model_param "${AGENT_LLM}" "api_key")"

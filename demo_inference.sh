@@ -4,14 +4,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SKILL_MAS_ROOT="${SCRIPT_DIR}"
+PACKAGE_ROOT="$(cd "${SKILL_MAS_ROOT}/.." && pwd)"
 
 MODEL="${1:-qwen3.5-plus}"
-SKILL_PATH="${2:-${SCRIPT_DIR}/init_skill/SKILL.md}"
+SKILL_PATH="${2:-${SKILL_MAS_ROOT}/init_skill/SKILL.md}"
 QUESTION="${3:-What is 17 + 28? Give the final answer in \\\\boxed{...} form.}"
 
-cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/vitabench_single/src"
+cd -- "${PACKAGE_ROOT}"
+export PYTHONPATH="${PACKAGE_ROOT}:${SKILL_MAS_ROOT}/dataset:${SKILL_MAS_ROOT}/dataset/vitabench/src"
 
 read_model_param() {
   local model="$1"

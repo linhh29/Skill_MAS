@@ -9,11 +9,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-_REPO = Path(__file__).resolve().parents[2]
-if str(_REPO) not in sys.path:
-    sys.path.insert(0, str(_REPO))
-if str(_REPO / "vitabench_single" / "src") not in sys.path:
-    sys.path.insert(0, str(_REPO / "vitabench_single" / "src"))
+from Skill_MAS.utils.paths import ensure_sys_path
+
+ensure_sys_path(include_vita=True, include_dataset=True)
 
 from ..core.model_config_runtime import model_runtime_params
 from ..utils.config import (
@@ -589,10 +587,10 @@ def run_multi_trajectory_rollout(
     merged = skill_root.resolve()
     os.environ["SKILL_MAS_DIR"] = str(merged)
     os.environ.setdefault("SKILL_MAS_MAX_TOOL_ROUNDS", "10")
-    # VitaBench: avoid filling vitabench_single/results/<model>/skill_mas_process_traces/ during evolve
-    # and skip mirror_simulation_to_results into vitabench_single/results/.
+    # VitaBench: avoid filling dataset/vitabench/results/<model>/skill_mas_process_traces/ during evolve
+    # and skip mirror_simulation_to_results into dataset/vitabench/results/.
     # Per-task Skill-MAS artifacts are written under round_XX/bench_rollouts/ via RunConfig.skill_mas_trace_out_dir.
-    # Set MASKILL_SKIP_VITABENCH_TRACE_EXPORT=0 before launch to restore legacy export + mirror under vitabench_single/results/.
+    # Set MASKILL_SKIP_VITABENCH_TRACE_EXPORT=0 before launch to restore legacy export + mirror under dataset/vitabench/results/.
     if bb == "vitabench" and "MASKILL_SKIP_VITABENCH_TRACE_EXPORT" not in os.environ:
         os.environ["MASKILL_SKIP_VITABENCH_TRACE_EXPORT"] = "1"
 

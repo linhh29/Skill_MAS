@@ -12,11 +12,9 @@ import threading
 from pathlib import Path
 from typing import Any
 
-_REPO = Path(__file__).resolve().parents[2]
-if str(_REPO) not in sys.path:
-    sys.path.insert(0, str(_REPO))
-if str(_REPO / "BrowseComp-Plus") not in sys.path:
-    sys.path.insert(0, str(_REPO / "BrowseComp-Plus"))
+from Skill_MAS.utils.paths import ensure_sys_path
+
+ensure_sys_path(include_dataset=True, include_bcp=True)
 
 from browsecomp_retrieval_tool import make_browsecomp_retrieval_tool_fn
 from bcp_io import load_jsonl
@@ -165,7 +163,7 @@ def ensure_hlemath_jsonl_readable(jsonl_path: Path) -> None:
     if not p.is_file():
         raise FileNotFoundError(f"HLEMATH JSONL not found: {p}")
     first = next((ln.strip() for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()), "")
-    if first.startswith("version ") and "git-lfs" in first:
+    if first.startswith("version https://git-lfs.github.com"):
         raise RuntimeError(f"{p} is a Git LFS pointer; fetch real JSONL first.")
 
 
@@ -412,7 +410,7 @@ def run_hlemath_evaluation_round(
             raw = line.strip()
             if not raw:
                 continue
-            if raw.startswith("version ") and "git-lfs" in raw:
+            if raw.startswith("version https://git-lfs.github.com"):
                 raise RuntimeError(f"{jsonl_path} is Git LFS pointer; use real JSONL (git lfs pull).")
             rows.append(json.loads(raw))
     id_set = {int(x) for x in task_ids}

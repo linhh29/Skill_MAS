@@ -16,13 +16,22 @@ def print_traces_enabled() -> bool:
     )
 
 
-# Skill_MAS/utils/config.py -> parents[2] = Ant repo root
-REPO_ROOT = Path(__file__).resolve().parents[2]
-VITA_SRC = REPO_ROOT / "vitabench_single" / "src"
-SKILL_MAS_HOME = REPO_ROOT / "Skill_MAS"
-INIT_SKILL_DIR = SKILL_MAS_HOME / "init_skill"
+from Skill_MAS.utils.paths import (
+    BCP_ROOT,
+    DRB_ROOT,
+    HLEMATH_ROOT,
+    INIT_SKILL_DIR,
+    PACKAGE_ROOT,
+    REPO_ROOT,
+    RESULTS_ROOT,
+    SKILL_MAS_HOME,
+    SKILL_MAS_ROOT,
+    VITA_SRC,
+    VITABENCH_ROOT,
+)
 
-RESULTS_ROOT = SKILL_MAS_HOME / "results"
+# Re-export for modules that import from config
+DATASET_ROOT = SKILL_MAS_ROOT / "dataset"
 BENCH_SEGMENT_VITABENCH = "vitabench"
 BENCH_SEGMENT_DRB = "drb"
 BENCH_SEGMENT_HLEMATH = "hlemath"
@@ -107,14 +116,14 @@ OPTIMIZER_RUBRIC_LINE_MAX = 300
 OPTIMIZER_INTERNAL_TRACE_MAX_ITEMS = 8
 OPTIMIZER_INTERNAL_TRACE_ENTRY_CHARS = 120
 
-DRB_BENCH_ROOT = REPO_ROOT / "deep_research_bench"
+DRB_BENCH_ROOT = DRB_ROOT
 DRB_VALIDATE_JSONL = DRB_BENCH_ROOT / "data" / "drb_validate.jsonl"
 DEFAULT_DRB_RACE_MAX_WORKERS = 16
 
-HLEMATH_JSONL_DEFAULT = REPO_ROOT / "hlemath" / "data" / "hlemath_validate.jsonl"
-BROWSECOMP_VALIDATE_JSONL = REPO_ROOT / "BrowseComp-Plus" / "data" / "browsecomp_plus_validate.jsonl"
-BROWSECOMP_BENCH_ROOT = REPO_ROOT / "BrowseComp-Plus"
-VITA_VALIDATE_JSON = REPO_ROOT / "vitabench_single" / "data" / "vita_validate.json"
+HLEMATH_JSONL_DEFAULT = HLEMATH_ROOT / "data" / "hlemath_validate.jsonl"
+BROWSECOMP_VALIDATE_JSONL = BCP_ROOT / "data" / "browsecomp_plus_validate.jsonl"
+BROWSECOMP_BENCH_ROOT = BCP_ROOT
+VITA_VALIDATE_JSON = VITABENCH_ROOT / "data" / "vita_validate.json"
 
 EVOLVE_K_TRAJECTORIES = 5
 EVOLVE_MAX_REFLECTION_CASES_PER_ROUND = 128

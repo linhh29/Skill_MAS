@@ -10,8 +10,6 @@ from typing import Any, Mapping, MutableMapping, Optional
 import httpx
 from openai import AsyncOpenAI
 
-from Skill_MAS.core.model_config_runtime import resolve_api_key, resolve_base_url
-
 # --- Why ``httpx.ReadError`` / mid-response failures happen (no code fix here; environment/Payload) ---
 #
 # - **TCP/TLS path**: HPC / NAT / firewall / proxy may RST idle sockets or drop long transfers;
@@ -28,6 +26,14 @@ _DEFAULT_READ_TIMEOUT = float(os.environ.get("SKILL_MAS_OPENAI_READ_TIMEOUT", "6
 _DEFAULT_CONNECT_TIMEOUT = float(os.environ.get("SKILL_MAS_OPENAI_CONNECT_TIMEOUT", "120"))
 
 MODEL_CONFIG_PATH = Path(__file__).resolve().parent / "model_config.json"
+
+
+def _resolve_api_key(raw: str | None) -> str | None:
+    try:
+        from Skill_MAS.utils.secrets_resolve import resolve_secret
+    except ImportError:
+        from utils.secrets_resolve import resolve_secret  # type: ignore[no-redef]
+    return resolve_secret(raw)
 
 # ``pipeline.evolve`` merges Vita ``models.get(model_id)`` into optimizer args; that dict often
 # contains display-only keys (``name``, ``description``, …) that are **not** OpenAI API parameters.
@@ -226,8 +232,9 @@ class AsyncOpenAIClient:
         self.model_config = _load_model_config()
         row = self.model_config.get(self.model, {}) if isinstance(self.model_config, dict) else {}
 
-        self.api_key = api_key or resolve_api_key(row.get("api_key") if isinstance(row, dict) else None)
-        self.base_url = base_url or resolve_base_url(row.get("base_url") if isinstance(row, dict) else None)
+        raw_key = api_key or (row.get("api_key") if isinstance(row, dict) else None)
+        self.api_key = _resolve_api_key(str(raw_key) if raw_key is not None else None)
+        self.base_url = base_url or (row.get("base_url") if isinstance(row, dict) else None)
         self.reasoning_effort = row.get("reasoning_effort") if isinstance(row, dict) else None
         self.temperature = row.get("temperature") if isinstance(row, dict) else None
         self.max_tokens = row.get("max_tokens") if isinstance(row, dict) else None

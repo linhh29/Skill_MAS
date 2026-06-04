@@ -33,7 +33,7 @@ MAX_CONCURRENCY=$2
 # ----------------------------
 # DRB-specific settings
 # ----------------------------
-DRB_BENCH_ROOT="${REPO_ROOT}/deep_research_bench"
+DRB_BENCH_ROOT="${REPO_ROOT}/Skill_MAS/dataset/deep_research_bench"
 JSONL="${DRB_BENCH_ROOT}/data/drb_validate.jsonl"
 DRB_RACE_MAX_WORKERS=$2
 # Actual DRB RACE evaluator model consumed by deep_research_bench/utils/api.py.
@@ -47,7 +47,7 @@ read_model_param() {
 }
 
 cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/vitabench_single/src"
+export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/Skill_MAS/dataset:${REPO_ROOT}/Skill_MAS/dataset/vitabench/src"
 
 # Print full traces in pipeline logs
 export MASKILL_PRINT_TRACES="0"

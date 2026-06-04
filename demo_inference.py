@@ -11,12 +11,10 @@ import os
 import sys
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
+from Skill_MAS.utils.paths import BCP_ROOT, ensure_sys_path
+
 _SKILL_MAS_HOME = Path(__file__).resolve().parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-if str(_REPO_ROOT / "vitabench_single" / "src") not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT / "vitabench_single" / "src"))
+ensure_sys_path(include_dataset=True, include_bcp=True)
 
 from Skill_MAS.core.model_config_runtime import apply_model_runtime_params, model_runtime_params
 from Skill_MAS.skill_mas.build import (
@@ -26,7 +24,7 @@ from Skill_MAS.skill_mas.build import (
     run_mas_pipeline_with_retries,
 )
 from Skill_MAS.skill_mas.openai_async_client import AsyncOpenAIClient
-from Skill_MAS.utils.config import BROWSECOMP_BENCH_ROOT, DEFAULT_AGENT_LLM
+from Skill_MAS.utils.config import DEFAULT_AGENT_LLM
 
 
 def _infer_dataset_from_skill(skill_path: Path) -> str | None:
@@ -99,11 +97,11 @@ def _build_bcp_tool_call_fn(
     doc_max_tokens: int,
     max_retrieval_rounds: int,
 ):
-    bcp_root = BROWSECOMP_BENCH_ROOT
+    bcp_root = BCP_ROOT
     if not bcp_root.is_dir():
         raise FileNotFoundError(
-            f"BrowseComp-Plus repo not found at {bcp_root}. "
-            "Clone it next to the repository root or choose a non-bcp skill/dataset."
+            f"BrowseComp-Plus not found at {bcp_root}. "
+            "Ensure dataset/BrowseComp-Plus is present or choose a non-bcp skill."
         )
     if str(bcp_root) not in sys.path:
         sys.path.insert(0, str(bcp_root))

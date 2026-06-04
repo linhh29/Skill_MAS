@@ -8,9 +8,9 @@ from pathlib import Path
 
 from ..utils.config import BENCH_SEGMENT_VITABENCH, runs_dir, skills_evolution_dir
 
-_REPO = Path(__file__).resolve().parents[2]
-if str(_REPO) not in sys.path:
-    sys.path.insert(0, str(_REPO))
+from Skill_MAS.utils.paths import ensure_sys_path
+
+ensure_sys_path(include_dataset=True)
 
 def _single_skill_ready(root: Path) -> bool:
     return (root / "SKILL.md").is_file()
