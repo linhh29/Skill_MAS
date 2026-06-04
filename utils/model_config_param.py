@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 
 from Skill_MAS.core.model_config_runtime import model_runtime_params
+from Skill_MAS.utils.secrets_resolve import resolve_secret
 
 
 def main() -> None:
@@ -15,6 +16,8 @@ def main() -> None:
 
     row = model_runtime_params(args.model)
     value = row.get(args.key, "")
+    if args.key == "api_key":
+        value = resolve_secret(None if value is None else str(value)) or ""
     print("" if value is None else str(value))
 
 

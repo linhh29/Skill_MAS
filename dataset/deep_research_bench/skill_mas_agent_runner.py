@@ -10,7 +10,6 @@ import re
 import threading
 import time
 from datetime import datetime, timezone
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -22,48 +21,197 @@ from Skill_MAS.skill_mas.build import (
     merge_usage_totals,
     run_mas_pipeline_with_retries,
 )
+from Skill_MAS.skill_mas.openai_async_client import AsyncOpenAIClient
+from Skill_MAS.skill_mas.process_trace_layout import (
+    iter_per_sample_trace_json_files,
+    sample_trace_json_dir,
+    skill_mas_sample_log_subdir,
+    skill_mas_trace_suffix_parts,
+    skill_workspace_from_init_path,
+)
 
-try:
-    from .drb_runtime import DRBArticle, enrich_usage_with_cost, load_drb_tasks, load_pricing_table, write_drb_articles
-    from .evaluate import run_drb_evaluation
-    from .run_single_agent import (
-        _evaluate_one_sample_async,
-        _load_jsonl_rows,
-        load_existing_output,
-        load_existing_traces,
-    )
-    from Skill_MAS.skill_mas.openai_async_client import AsyncOpenAIClient
-    from Skill_MAS.skill_mas.process_trace_layout import (
-        iter_per_sample_trace_json_files,
-        sample_trace_json_dir,
-        skill_mas_sample_log_subdir,
-        skill_mas_trace_suffix_parts,
-        skill_workspace_from_init_path,
-    )
-except ImportError:
-    from drb_runtime import DRBArticle, enrich_usage_with_cost, load_drb_tasks, load_pricing_table, write_drb_articles
-    from evaluate import run_drb_evaluation
-    from run_single_agent import (
-        _evaluate_one_sample_async,
-        _load_jsonl_rows,
-        load_existing_output,
-        load_existing_traces,
-    )
-    from Skill_MAS.skill_mas.openai_async_client import AsyncOpenAIClient
-    from Skill_MAS.skill_mas.process_trace_layout import (
-        iter_per_sample_trace_json_files,
-        sample_trace_json_dir,
-        skill_mas_sample_log_subdir,
-        skill_mas_trace_suffix_parts,
-        skill_workspace_from_init_path,
-    )
+from .drb_runtime import DRBArticle, DRBTask, enrich_usage_with_cost, load_drb_tasks, load_pricing_table, write_drb_articles
+from .evaluate import run_drb_evaluation
 
 
-@dataclass
-class DRBTask:
-    id: int
-    prompt: str
-    language: str = "en"
+def _load_jsonl_rows(path: Path | str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with Path(path).open("r", encoding="utf-8") as f:
+        for line_no, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            obj = json.loads(line)
+            if isinstance(obj, dict):
+                rows.append(obj)
+            else:
+                raise ValueError(f"Expected JSON object at {path}:{line_no}")
+    return rows
+
+
+def load_existing_output(output_path: Path) -> dict[int, DRBArticle]:
+    if not output_path.is_file():
+        return {}
+    out: dict[int, DRBArticle] = {}
+    for row in _load_jsonl_rows(output_path):
+        tid = int(row["id"])
+        out[tid] = DRBArticle(
+            id=tid,
+            prompt=str(row.get("prompt", "")),
+            article=str(row.get("article", "")),
+        )
+    return out
+
+
+def load_existing_traces(
+    process_trace_dir: Path,
+    *,
+    require_judged: bool = False,
+) -> tuple[dict[int, DRBArticle], dict[str, Any]]:
+    totals: dict[str, Any] = {
+        "prompt_tokens": 0.0,
+        "output_tokens": 0.0,
+        "total_tokens": 0.0,
+        "estimated_cost_usd": 0.0,
+    }
+    existing: dict[int, DRBArticle] = {}
+    if not process_trace_dir.is_dir():
+        return existing, totals
+    for trace_file in iter_per_sample_trace_json_files(process_trace_dir):
+        try:
+            obj = json.loads(trace_file.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        try:
+            tid = int(obj.get("task_id", obj.get("id")))
+        except (TypeError, ValueError):
+            continue
+        if require_judged:
+            race_eval = obj.get("race_eval")
+            if not isinstance(race_eval, dict) or not race_eval.get("ok"):
+                continue
+        article = str(obj.get("article") or obj.get("final_output") or "").strip()
+        if not article:
+            continue
+        existing[tid] = DRBArticle(
+            id=tid,
+            prompt=str(obj.get("prompt", "")),
+            article=article,
+        )
+        usage = obj.get("usage_totals") if isinstance(obj.get("usage_totals"), dict) else {}
+        totals["prompt_tokens"] += float(usage.get("prompt_tokens", 0) or 0)
+        totals["output_tokens"] += float(usage.get("output_tokens", 0) or 0)
+        totals["total_tokens"] += float(usage.get("total_tokens", 0) or 0)
+        totals["estimated_cost_usd"] += float(usage.get("estimated_cost_usd", 0.0) or 0.0)
+    return existing, totals
+
+
+def _format_criteria_list(criteria_data: dict[str, Any]) -> str:
+    criteria_for_prompt: dict[str, list[dict[str, str]]] = {}
+    criterions_dict = criteria_data.get("criterions", {})
+    if not isinstance(criterions_dict, dict):
+        raise ValueError("criteria_data.criterions must be a dict")
+    for dim, criterions_list in criterions_dict.items():
+        if not isinstance(criterions_list, list):
+            continue
+        criteria_for_prompt[str(dim)] = []
+        for crit_item in criterions_list:
+            if isinstance(crit_item, dict) and "criterion" in crit_item and "explanation" in crit_item:
+                criteria_for_prompt[str(dim)].append(
+                    {
+                        "criterion": str(crit_item["criterion"]),
+                        "explanation": str(crit_item["explanation"]),
+                    }
+                )
+    return json.dumps(criteria_for_prompt, ensure_ascii=False, indent=2)
+
+
+async def _evaluate_one_sample_async(
+    *,
+    task: Any,
+    article: str,
+    reference_article: str,
+    criteria_data: dict[str, Any],
+    judge_client: AsyncOpenAIClient,
+    max_retries: int = 10,
+) -> dict[str, Any]:
+    from .prompt.score_prompt_en import generate_merged_score_prompt as en_merged_score_prompt
+    from .prompt.score_prompt_zh import generate_merged_score_prompt as zh_merged_score_prompt
+    from .utils.json_extractor import extract_json_from_markdown
+    from .utils.score_calculator import calculate_weighted_scores
+
+    prompt = str(getattr(task, "prompt", "") or "")
+    language = str(getattr(task, "language", "en") or "en")
+    task_id = int(getattr(task, "id", -1))
+    try:
+        criteria_list_str = _format_criteria_list(criteria_data)
+    except ValueError as exc:
+        return {"ok": False, "error": f"Failed to format criteria: {exc}"}
+
+    merged_score_prompt = zh_merged_score_prompt if language == "zh" else en_merged_score_prompt
+    user_prompt = merged_score_prompt.format(
+        task_prompt=prompt,
+        article_1=article,
+        article_2=reference_article,
+        criteria_list=criteria_list_str,
+    )
+
+    llm_response_str = ""
+    llm_output_json: dict[str, Any] | None = None
+    last_error = "unknown"
+    for retry_count in range(max_retries):
+        try:
+            llm_response_str, _usage = await judge_client.generate(
+                user_prompt=user_prompt,
+                system_prompt="",
+            )
+            json_str_extracted = extract_json_from_markdown(llm_response_str)
+            if not json_str_extracted:
+                raise ValueError("Failed to extract JSON from judge response")
+            llm_output_json = json.loads(json_str_extracted)
+            expected_dims = ["comprehensiveness", "insight", "instruction_following", "readability"]
+            missing_dims = [dim for dim in expected_dims if dim not in llm_output_json]
+            if missing_dims:
+                raise ValueError(f"Missing expected dimensions: {missing_dims}")
+            break
+        except Exception as exc:
+            last_error = str(exc)
+            if retry_count + 1 >= max_retries:
+                return {
+                    "ok": False,
+                    "error": f"Failed after {max_retries} retries: {last_error}",
+                    "model_output": llm_response_str[:500] if llm_response_str else "No response",
+                }
+            await asyncio.sleep(1.5 ** (retry_count + 1))
+
+    assert llm_output_json is not None
+    try:
+        scores = calculate_weighted_scores(llm_output_json, criteria_data, language)
+        target_total = scores["target"]["total"]
+        reference_total = scores["reference"]["total"]
+        overall_score = target_total / (target_total + reference_total) if target_total + reference_total > 0 else 0.0
+        normalized_dims: dict[str, float] = {}
+        for dim in ["comprehensiveness", "insight", "instruction_following", "readability"]:
+            dim_key = f"{dim}_weighted_avg"
+            target_score = scores["target"]["dims"].get(dim_key, 0.0)
+            reference_score = scores["reference"]["dims"].get(dim_key, 0.0)
+            if target_score + reference_score > 0:
+                normalized_dims[dim] = target_score / (target_score + reference_score)
+            else:
+                normalized_dims[dim] = 0.0
+    except Exception as exc:
+        return {"ok": False, "error": f"Error calculating scores: {exc}"}
+
+    return {
+        "ok": True,
+        "id": task_id,
+        "prompt": prompt,
+        "comprehensiveness": normalized_dims.get("comprehensiveness", 0.0),
+        "insight": normalized_dims.get("insight", 0.0),
+        "instruction_following": normalized_dims.get("instruction_following", 0.0),
+        "readability": normalized_dims.get("readability", 0.0),
+        "overall_score": overall_score,
+    }
 
 
 def _collect_usage_totals(state: dict[str, Any]) -> dict[str, Any]:

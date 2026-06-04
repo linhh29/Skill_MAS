@@ -232,7 +232,7 @@ async def run_browsecomp_skill_mas_on_task(
                 "Each session is one SubAgentRequest tool call with multi_turn_search. "
                 "Trajectory records per-round queries/decisions and new_docids_first_seen_this_round only "
                 "(snippet bodies are not duplicated here); evidence text in the tool return is the "
-                "last BM25 round only, matching run_single_agent build_single_agent_user_prompt(question, contexts)."
+                "last BM25 round only, matching BrowseComp-Plus build_single_agent_user_prompt(question, contexts)."
             ),
             "sessions": _to_jsonable(retrieval_sessions_out),
         }

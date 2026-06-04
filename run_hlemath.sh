@@ -4,7 +4,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SKILL_MAS_ROOT="${SCRIPT_DIR}"
+PACKAGE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 BENCH_ID="skill_mas_agent"
 RUN_ID="exp1"
@@ -13,14 +14,12 @@ ROUNDS="10"
 K_TRAJ="5"
 MAX_PROBLEMS="0"
 
-
 MODEL=$1
 AGENT_LLM=$MODEL
 OPTIMIZER_LLM=$MODEL
 MAX_CONCURRENCY=$2
 
-JSONL="${REPO_ROOT}/Skill_MAS/dataset/hlemath/data/hlemath_validate.jsonl"
-MODEL_CONFIG="${REPO_ROOT}/Skill_MAS/skill_mas/model_config.json"
+JSONL="${SKILL_MAS_ROOT}/dataset/hlemath/data/hlemath_validate.jsonl"
 
 read_model_param() {
   local model="$1"
@@ -28,8 +27,8 @@ read_model_param() {
   python -m Skill_MAS.utils.model_config_param --model "$model" --key "$key"
 }
 
-cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/Skill_MAS/dataset:${REPO_ROOT}/Skill_MAS/dataset/vitabench/src"
+cd -- "${PACKAGE_ROOT}"
+export PYTHONPATH="${PACKAGE_ROOT}:${SKILL_MAS_ROOT}/dataset:${SKILL_MAS_ROOT}/dataset/vitabench/src"
 
 export MASKILL_PRINT_TRACES="0"
 export LOGURU_LEVEL="ERROR"

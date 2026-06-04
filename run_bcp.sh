@@ -4,7 +4,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SKILL_MAS_ROOT="${SCRIPT_DIR}"
+PACKAGE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+BCP_ROOT="${SKILL_MAS_ROOT}/dataset/BrowseComp-Plus"
 
 BENCH_ID="skill_mas_agent"
 RUN_ID="exp1"
@@ -17,17 +19,15 @@ MAX_PROBLEMS="0"
 MODEL=$1
 AGENT_LLM=$MODEL
 OPTIMIZER_LLM=$MODEL
-# BrowseComp-Plus judge.py (same default as BrowseComp-Plus/run_single_agent.py)
-JUDGE_LLM="gemini-3.1-flash-lite-preview"
+JUDGE_LLM="deepseek-v4-flash"
 JUDGE_TIMEOUT_S="1200"
 MAX_CONCURRENCY=$2
 
-JSONL="${REPO_ROOT}/Skill_MAS/dataset/BrowseComp-Plus/data/browsecomp_plus_validate.jsonl"
-INDEX_PATH="${REPO_ROOT}/Skill_MAS/dataset/BrowseComp-Plus/scripts_build_index/indexes/bm25"
+JSONL="${BCP_ROOT}/data/browsecomp_plus_validate.jsonl"
+INDEX_PATH="${BCP_ROOT}/scripts_build_index/indexes/bm25"
 RETRIEVAL_TOPK="5"
 DOC_MAX_TOKENS="512"
 MAX_RETRIEVAL_ROUNDS="10"
-MODEL_CONFIG="${REPO_ROOT}/Skill_MAS/skill_mas/model_config.json"
 
 read_model_param() {
   local model="$1"
@@ -35,10 +35,12 @@ read_model_param() {
   python -m Skill_MAS.utils.model_config_param --model "$model" --key "$key"
 }
 
-cd -- "${REPO_ROOT}"
-export PYTHONPATH="${REPO_ROOT}:${REPO_ROOT}/Skill_MAS/dataset:${REPO_ROOT}/Skill_MAS/dataset/BrowseComp-Plus:${REPO_ROOT}/Skill_MAS/dataset/vitabench/src"
+cd -- "${PACKAGE_ROOT}"
+export PYTHONPATH="${PACKAGE_ROOT}:${SKILL_MAS_ROOT}/dataset:${BCP_ROOT}:${SKILL_MAS_ROOT}/dataset/vitabench/src"
 
 export MASKILL_PRINT_TRACES="0"
+export LOGURU_LEVEL="ERROR"
+export VITA_SUPPRESS_MODEL_LIST="1"
 export OPENAI_API_KEY="$(read_model_param "${AGENT_LLM}" "api_key")"
 export OPENAI_API_BASE="$(read_model_param "${AGENT_LLM}" "base_url")"
 export SKILL_MAS_AGENT_TEMPERATURE="$(read_model_param "${AGENT_LLM}" "temperature")"

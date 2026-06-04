@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_MAS_ROOT="${SCRIPT_DIR}"
 PACKAGE_ROOT="$(cd "${SKILL_MAS_ROOT}/.." && pwd)"
 
-MODEL="${1:-qwen3.5-plus}"
+MODEL="${1:-deepseek-v4-flash}"
 SKILL_PATH="${2:-${SKILL_MAS_ROOT}/init_skill/SKILL.md}"
 QUESTION="${3:-What is 17 + 28? Give the final answer in \\\\boxed{...} form.}"
 

@@ -177,6 +177,11 @@ async def _run(args: argparse.Namespace) -> int:
     print(f"[demo_inference] dataset={dataset} model={model}", flush=True)
     print(f"[demo_inference] question={question[:200]}{'...' if len(question) > 200 else ''}", flush=True)
 
+    def _print_stage3_mas_code(mas_code: str) -> None:
+        print("\n===== STAGE 3 MAS CODE =====", flush=True)
+        print(mas_code, flush=True)
+        print("===== END MAS CODE =====\n", flush=True)
+
     try:
         result = await run_mas_pipeline_with_retries(
             task_text=question,
@@ -188,6 +193,7 @@ async def _run(args: argparse.Namespace) -> int:
             max_generation_attempts=args.max_generation_attempts,
             max_execution_attempts=args.max_execution_attempts,
             dataset_name=dataset,
+            on_mas_code_generated=_print_stage3_mas_code,
         )
     finally:
         await client.aclose()

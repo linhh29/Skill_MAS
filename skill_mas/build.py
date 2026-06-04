@@ -2280,6 +2280,7 @@ async def run_mas_pipeline_with_retries(
     max_generation_attempts: int = 5,
     max_execution_attempts: int = 3,
     dataset_name: str = "unknown",
+    on_mas_code_generated: Callable[[str], None] | None = None,
 ) -> MASRunWithRetryResult:
     """
     End-to-end MAS build + execution with retry policies.
@@ -2313,6 +2314,9 @@ async def run_mas_pipeline_with_retries(
             failure_reason=reason or "generation failed after retries",
             retry_events=retry_events,
         )
+
+    if on_mas_code_generated is not None and artifacts.mas_code:
+        on_mas_code_generated(artifacts.mas_code)
 
     ok, state, final_code, exec_attempts, exec_events, exec_err = await run_generated_workflow_with_retries(
         mas_code=artifacts.mas_code,

@@ -37,7 +37,7 @@ def _default_preload_planner_llm() -> str:
     env2 = (os.environ.get("VITABENCH_SKILL_MAS_PLANNER_LLM") or "").strip()
     if env2:
         return env2
-    return "gemini-3.1-flash-lite-preview"
+    return "deepseek-v4-flash"
 
 
 def _skill_mas_results_model_label(*, agent_llm: str, planner_llm: str | None) -> str:
@@ -91,7 +91,7 @@ def main() -> None:
     p.add_argument("--max-concurrency", type=int, default=50, help="Max concurrent samples (capped at 50)")
     p.add_argument("--max-problems", type=int, default=0, help="0 = all lines")
     p.add_argument("--indices", type=str, default="", help="Comma-separated line indices (default: all)")
-    p.add_argument("--judge-llm", default="qwen3-max")
+    p.add_argument("--judge-llm", default="deepseek-v4-flash")
     p.add_argument("--judge-timeout-s", type=float, default=120.0)
     p.add_argument("--per-sample-timeout-s", type=float, default=600.0)
     p.add_argument(
