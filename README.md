@@ -1,4 +1,4 @@
-# 🚀 Skill-MAS: Evolving Meta-Agent Skills for Automatic Multi-Agent System Design
+# 🚀 Skill-MAS: Evolving Meta-Skill for Automatic Multi-Agent Systems
 
 
 <div align="center">
