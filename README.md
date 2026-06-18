@@ -33,7 +33,7 @@
 - [4. Running Evolution](#4-running-evolution)
 - [5. Evaluating a Fixed Skill](#5-evaluating-a-fixed-skill)
 - [6. Tips](#6-tips)
-- [Citation](#citation)
+- [7. BibTeX](#BibTeX)
 
 ---
 
@@ -329,7 +329,7 @@ bash Skill_MAS/dataset/vitabench/run_skill_mas.sh optimized_skill/vitabench.md <
 
 ---
 
-## BibTeX
+## 7. BibTeX
 
 
 ```bibtex
