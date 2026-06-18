@@ -5,8 +5,14 @@
 
 ### One `SKILL.md` → Three-Stage MAS Build → Multi-Benchmark Evolution
 
+[![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2606.18837)
+[![Daily Paper](https://img.shields.io/badge/Daily%20Paper-Hugging%20Face-yellow?logo=huggingface&logoColor=white)](https://huggingface.co/papers/2606.18837)
 [![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github&logoColor=white)](https://github.com/linhh29/Skill_MAS)
+[![Blog](https://img.shields.io/badge/Blog-Project%20Page-0078D4?logo=readthedocs&logoColor=white)](https://linhh29.github.io/blog/Skill-MAS/index.html)
 
+[![Gallery](https://img.shields.io/badge/Gallery-Interactive%20Hub-orange?logo=image&logoColor=white)](https://ports-baseball-paso-grow.trycloudflare.com/gallery)
+[![Demo](https://img.shields.io/badge/Demo-Online%20Demo-512BD4?logo=rocket&logoColor=white)](https://ports-baseball-paso-grow.trycloudflare.com/demo)
+[![Run Locally](https://img.shields.io/badge/Run%20Locally-Setup%20Guide-2ea44f?logo=terminal&logoColor=white)](https://ports-baseball-paso-grow.trycloudflare.com/local)
 
 </div>
 
@@ -14,7 +20,7 @@
 
 ## 🥳 News
 
-- **[2026-06-03]** We release the code for Skill-MAS.
+- **[2026-06-17]** We release the **code** and **paper**: [Skill-MAS: Evolving Meta-Skill for Automatic Multi-Agent Systems](https://arxiv.org/abs/2606.18837).
 
 
 ---
@@ -27,6 +33,7 @@
 - [4. Running Evolution](#4-running-evolution)
 - [5. Evaluating a Fixed Skill](#5-evaluating-a-fixed-skill)
 - [6. Tips](#6-tips)
+- [Citation](#citation)
 
 ---
 
@@ -314,10 +321,22 @@ bash Skill_MAS/dataset/vitabench/run_skill_mas.sh optimized_skill/vitabench.md <
 - BrowseComp-Plus requires the BM25 index and official data pipeline — see `dataset/BrowseComp-Plus/README.md`.
 - Cached trajectories and skills live under `results/`; add that path to `.gitignore` if you fork the repo.
 
----
-
 <div align="center">
 
-### 🌟 If you find Skill-MAS helpful, please consider giving us a star!
+### 🌟 If you find Skill-MAS helpful, please consider citing our paper and giving us a star!
 
 </div>
+
+---
+
+## BibTeX
+
+
+```bibtex
+@article{lin2026skill,
+  title   = {Skill-MAS: Evolving Meta-Skill for Automatic Multi-Agent Systems},
+  author  = {Lin, Hehai and Yang, Qi and Qin, Chengwei},
+  journal = {arXiv preprint arXiv:2606.18837},
+  year    = {2026}
+}
+```
