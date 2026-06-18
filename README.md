@@ -33,7 +33,7 @@
 - [4. Running Evolution](#4-running-evolution)
 - [5. Evaluating a Fixed Skill](#5-evaluating-a-fixed-skill)
 - [6. Tips](#6-tips)
-- [7. BibTeX](#BibTeX)
+- [7. BibTeX](#7-BibTeX)
 
 ---
 
