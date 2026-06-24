@@ -10,9 +10,9 @@
 [![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github&logoColor=white)](https://github.com/linhh29/Skill_MAS)
 [![Blog](https://img.shields.io/badge/Blog-Project%20Page-0078D4?logo=readthedocs&logoColor=white)](https://linhh29.github.io/blog/Skill-MAS/index.html)
 
-[![Gallery](https://img.shields.io/badge/Gallery-Interactive%20Hub-orange?logo=image&logoColor=white)](https://ports-baseball-paso-grow.trycloudflare.com/gallery)
-[![Demo](https://img.shields.io/badge/Demo-Online%20Demo-512BD4?logo=rocket&logoColor=white)](https://ports-baseball-paso-grow.trycloudflare.com/demo)
-[![Run Locally](https://img.shields.io/badge/Run%20Locally-Setup%20Guide-2ea44f?logo=terminal&logoColor=white)](https://ports-baseball-paso-grow.trycloudflare.com/local)
+[![Gallery](https://img.shields.io/badge/Gallery-Interactive%20Hub-orange?logo=image&logoColor=white)](https://skill-mas-demo.hehailin.life/gallery)
+[![Demo](https://img.shields.io/badge/Demo-Online%20Demo-512BD4?logo=rocket&logoColor=white)](https://skill-mas-demo.hehailin.life/demo)
+[![Run Locally](https://img.shields.io/badge/Run%20Locally-Setup%20Guide-2ea44f?logo=terminal&logoColor=white)](https://skill-mas-demo.hehailin.life/local)
 
 </div>
 
